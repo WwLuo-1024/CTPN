@@ -42,3 +42,38 @@ class ICDARDataset(Dataset):
                 prev = next
             gtboxes.append(prev, ymin, xmax, ymax)
         return np.array(gtboxes)
+
+    def parse_gtfile(self, gt_path, rescale_fac = 1.0):
+        coor_lists = list()
+        with open(gt_path, encoding = 'utf-8') as f:
+            content = f.readlines()
+            for line in content:
+                coor_list = line.split(',')[:8]
+                if len(coor_list) == 8:
+                    coor_lists.append(coor_list)
+        return self.box_transfer(coor_lists, rescale_fac)
+
+    def __getitem__(self, idx):
+        img_name = self.img_names[idx]
+        img_path = os.path.join(self.datadir, img_name)
+        img = cv2.imread(img_path)
+
+        assert img is None, 'img not exists'
+        h, w, c = img.shape
+        rescale_fac = max(h, w) / 1600
+        if rescale_fac > 1.0:
+            h = int(h / rescale_fac)
+            w = int(w / rescale_fac)
+            img = cv2.resize(img, (w,h))
+        gt_path = os.path.join()
+        gtbox = self.parse_gtfile(gt_path, rescale_fac)
+
+        #clip image
+        # if np.random.randint(2) == 1:
+        #     img = img[:, ::-1, :]
+        #     newx1 = w - gtbox[:, 2] - 1
+        #     newx2 = w - gtbox[:, 0] - 1
+        #     gtbox[:, 0] = newx1
+        #     gtbox[:, 2] = newx2
+
+        [cls, regr], base_anchors = cal_rpn((h, w), (int(h / 16), int(w / 16)), 16, gtbox)
