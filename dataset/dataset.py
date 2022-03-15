@@ -68,12 +68,14 @@ class ICDARDataset(Dataset):
         gt_path = os.path.join()
         gtbox = self.parse_gtfile(gt_path, rescale_fac)
 
-        #clip image
-        # if np.random.randint(2) == 1:
-        #     img = img[:, ::-1, :]
-        #     newx1 = w - gtbox[:, 2] - 1
-        #     newx2 = w - gtbox[:, 0] - 1
-        #     gtbox[:, 0] = newx1
-        #     gtbox[:, 2] = newx2
-
         [cls, regr], base_anchors = cal_rpn((h, w), (int(h / 16), int(w / 16)), 16, gtbox)
+        m_img = img - IMAGE_MEAN
+        regr = np.hstack([cls.reshape(cls.shape[0], 1), regr]) #Element arrays are stacked horizontally
+        cls = np.expand_dims(cls, axis = 0)
+
+        #transform to torch tensor
+        m_img = torch.from_numpy(m_img.transpose([2, 0, 1])).float()
+        cls = torch.from_numpy(cls).float()
+        regr = torch.from_numpy(regr).float()
+
+        return m_img, cls, regr
