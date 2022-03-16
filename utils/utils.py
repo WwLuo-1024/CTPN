@@ -62,6 +62,33 @@ def get_anchor(featuresize, scale):
             anchor.append(base_anchor + [j, i, j, i])
     return np.array(anchor).reshape((-1, 4))
 
+def iou(box1, box1_area, box2, box2_area):
+    """
+    box1 [x1, y1, x2, y2] anchor
+    box2 [x1, y1, x2, y2] ground-truth box
+    """
+
+    x1 = np.maximum(box1[0], box2[:, 0])
+    x2 = np.minimum(box1[2], box2[:, 2])
+    y1 = np.maximum(box1[1], box2[:, 1])
+    y2 = np.minimum(box1[3], box2[:, 3])
+
+    intersection = np.maximum(x2 - x1, 0) * np.maximum(y2 - y1, 0)
+    iou = intersection / (box1_area + box2_area[:] - intersection[:])
+    return iou
+
+def cal_overlaps(boxes1, boxes2):
+    area1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
+    area2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
+
+    overlaps = np.zeros((boxes1.shape[0], boxes2.shape[0])) #initial overlaps
+
+    for i in range(boxes1.shape[0]):
+        overlaps[i][:] = iou(boxes1[i], area1[i], boxes2, area2)
+
+    return overlaps
+
+
 def cal_rpn():
     pass
 
