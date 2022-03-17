@@ -27,9 +27,9 @@ def resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     #return the image
     return resized
 
-def get_anchor(featuresize, scale):
+def gen_anchor(featuresize, scale):
     """
-    gen base anchor from feature map [HXW][9][4]
+    generate base anchor from feature map [HXW][9][4]
     reshape [HXW][9][4] TO [HXWX9][4]
 
     """
@@ -88,9 +88,40 @@ def cal_overlaps(boxes1, boxes2):
 
     return overlaps
 
+def bbox_transform(anchors, gtboxes):
+    """
+    compute relative predicted vertical coordinates Vc, Vh with respect to the
+    bouding box location of an anchor
+    """
 
-def cal_rpn():
-    pass
+    cy = (gtboxes[:, 1] + gtboxes[:, 3]) * 0.5
+    cya = (anchors[:, 1] + anchors[:, 3]) * 0.5
+    h = gtboxes[:, 3] - gtboxes[:, 1] + 1.0
+    ha = anchors[:, 3] - anchors[:, 1] + 1.0
+
+    vc = (cy - cya) / ha
+    vh = np.log(h / ha)
+
+    return np.vstack((vc,vh)).transpose()
+
+
+def cal_rpn(imgsize, featuresize, scale, gtboxes):
+    imgh, imgw = imgsize
+
+    #generate base anchor
+    base_anchor = gen_anchor(featuresize, scale)
+
+    #calculate iou
+    overlaps = cal_overlaps(base_anchor, gtboxes)
+
+    #init labels -1 ignore(越界） 0 is negative 1 is positive
+    labels = np.empty(base_anchor.shape[0])
+    labels.fill(-1)
+
+    #for each ground truth box corresponds to an anchor which hase highest IOU
+    gr_argmax_overlaps = overlaps.argmax(axis = 10)
+
+
 
 if __name__ == '__main__':
     pass
