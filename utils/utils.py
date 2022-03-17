@@ -119,8 +119,30 @@ def cal_rpn(imgsize, featuresize, scale, gtboxes):
     labels.fill(-1)
 
     #for each ground truth box corresponds to an anchor which hase highest IOU
-    gr_argmax_overlaps = overlaps.argmax(axis = 10)
+    gr_argmax_overlaps = overlaps.argmax(axis = 0) #
 
+    #the anchor with the highest IOU overlap with a ground truth box
+    anchor_argmax_overlaps = overlaps.argmax(axis = 1) #If axis=1, the index of the maximum value in each row is compared by row
+    anchor_max_overlaps = overlaps[range(overlaps.shape[0]), anchor_argmax_overlaps]
+
+    # IOU > IOU_POSITIVE
+    labels[anchor_max_overlaps > IOU_POSITIVE] = 1
+
+    # IOU < IOU_NEGATIVR
+    labels[anchor_max_overlaps < IOU_NEGATIVE] = 0
+
+    # ensure that every ground truth box has at least one postive RPN region
+    labels[gr_argmax_overlaps] = 1
+
+    #only keep anchors inside the image
+    outside_anchor = np.where(
+        (base_anchor[:, 0] < 0) |
+        (base_anchor[:, 1] < 0) |
+        (base_anchor[:, 2] >= imgw) |
+        (base_anchor[:, 3] >= imgh)
+    )[0]
+
+    labels[outside_anchor] = -1 #判断是否越界
 
 
 if __name__ == '__main__':
