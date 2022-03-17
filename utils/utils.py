@@ -144,6 +144,11 @@ def cal_rpn(imgsize, featuresize, scale, gtboxes):
 
     labels[outside_anchor] = -1 #判断是否越界
 
+    #subsample postive labels, if greater than RPN_POSTIVE_NUM(default 128)
+    fg_index = np.where(labels == 1)[0]
+    #print (len(fg_index))
+    if(len(fg_index) > RPN_POSITIVE_NUM):
+        labels[np.random.choice(fg_index, len(fg_index) - RPN_POSITIVE_NUM, replace = False)] = -1
 
 if __name__ == '__main__':
     pass
