@@ -150,6 +150,15 @@ def cal_rpn(imgsize, featuresize, scale, gtboxes):
     if(len(fg_index) > RPN_POSITIVE_NUM):
         labels[np.random.choice(fg_index, len(fg_index) - RPN_POSITIVE_NUM, replace = False)] = -1
 
+    #subsample negative labels
+    if not OHEM:
+        bg_index = np.where(labels == 0)[0]
+        num_bg = RPN_TOTAL_NUM - np.sum(labels == 1)
+        if (len(bg_index) > num_bg):
+            labels[np.random.choice(bg_index, len(bg_index) - num_bg, replace = False)] = -1
+
+    bbox_targets = bbox_transform(base_anchor, gtboxes[anchor_argmax_overlaps, :])
+
 if __name__ == '__main__':
     pass
     # heights = [11, 16, 23, 33, 48, 68, 97, 139, 198, 283]
